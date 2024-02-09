@@ -9,7 +9,7 @@ from sklearn.model_selection import KFold
 import torch
 import torchvision
 import torchvision.transforms as transforms
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import torch.nn as nn
 import torch.optim as optim
 
@@ -42,23 +42,29 @@ class neural_net(torch.nn.Module):
             nn.Linear(intput_dim, 256),
             nn.ReLU(),
 
-            nn.Linear(256, 512),
+            nn.Linear(256, 1024),
             nn.ReLU(),
 
             nn.Dropout(0.5),
 
-            nn.Linear(512, 512),
+            nn.Linear(1024, 1024),
             nn.ReLU(),
+
+            nn.BatchNorm1d(1024),
 
             nn.Dropout(0.5),
 
-            nn.Linear(512, 256),
+            nn.Linear(1024, 256),
             nn.ReLU(),
+
+            nn.BatchNorm1d(256),
 
             nn.Dropout(0.5),
 
             nn.Linear(256, 64),
             nn.ReLU(),
+
+            nn.BatchNorm1d(64),
 
             nn.Linear(64, 32),
             nn.ReLU(),
@@ -76,7 +82,7 @@ class neural_net(torch.nn.Module):
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=0.001)
         self.batch_size = _batch_size
 
-    def train(self, X_train, Y_train, n_epochs=100):
+    def train(self, X_train, Y_train, n_epochs=100, train_all =  False):
         N_train = int(X_train.shape[0] * 4 / 5)
 
         selected_item = np.random.choice(np.arange(X_train.shape[0]), N_train, replace=False)
@@ -91,10 +97,13 @@ class neural_net(torch.nn.Module):
 
         # create training dataset
         self.train_dataset = telecomDataset(torch.tensor(X_train_train).float(), torch.tensor(Y_train_train).float())
-        self.train_loader = torch.utils.data.DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=True)
-
-        # create testing dataset
         self.test_dataset = telecomDataset(torch.tensor(X_train_val).float(), torch.tensor(Y_train_val).float())
+
+        if (train_all):
+            self.train_dataset = telecomDataset(torch.tensor(X_train).float(), torch.tensor(Y_train).float())
+            self.test_dataset = telecomDataset(torch.tensor(X_train).float(), torch.tensor(Y_train).float())
+
+        self.train_loader = torch.utils.data.DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=True)        
         self.test_loader = torch.utils.data.DataLoader(self.test_dataset, batch_size=self.batch_size, shuffle=False)
 
         training_accuracy_history = np.zeros([n_epochs, 1])
